@@ -32,28 +32,28 @@ local function OpenVending(name)
     if Vendings[name] then
         lib.registerContext({
             id = 'uniq_vendingmachine:openVendingSettigs',
-            title = 'Vending Settings',
+            title = L('context.vending_settings'),
             options = {
                 {
-                    title = 'Money',
+                    title = L('context.money'),
                     onSelect = function()
                         exports.ox_inventory:openInventory('stash', ('stash-%s'):format(name))
                     end
                 },
                 {
-                    title = 'Update Stock',
+                    title = L('context.update_stock'),
                     onSelect = function()
                         local options = {}
                         for k,v in pairs(Vendings[name].items) do
                             options[#options + 1] = {
                                 icon = ('https://cfx-nui-ox_inventory/web/images/%s.png'):format(v.name),
                                 title = v.label,
-                                description = ('Stock: %s | Price: $%s'):format(v.stock, v.price),
+                                description = L('context.stock_price'):format(v.stock, v.price),
                                 arrow = true,
                                 onSelect = function ()
                                     local item = lib.inputDialog(v.label, {
-                                        { type = 'number', label = 'Item price', min = 1, required = true, default = v.price },
-                                        { type = 'number', label = 'Stock', min = 1, required = true, default = v.stock },
+                                        { type = 'number', label = L('context.item_price'), min = 1, required = true, default = v.price },
+                                        { type = 'number', label = L('context.item_stock'), min = 1, required = true, default = v.stock },
                                     }, {allowCancel = false})
                                     if not item then return end
 
@@ -68,7 +68,7 @@ local function OpenVending(name)
                         end
                         lib.registerContext({
                             id = 'uniq_vendingmachine:openVendingSettigs:sun',
-                            title = 'Items',
+                            title = L('context.items'),
                             options = options
                         })
 
@@ -95,7 +95,7 @@ local function onEnter(point)
 
         exports.ox_target:addLocalEntity(entity, {
             {
-                label = 'Buy Vending',
+                label = L('target.buy_vending'),
                 icon = 'fa-solid fa-dollar-sign',
                 canInteract = function()
                     if point.owner == false then return true end
@@ -104,8 +104,8 @@ local function onEnter(point)
                 end,
                 onSelect = function ()
                     local alert = lib.alertDialog({
-                        header = 'Buy Vending Machine',
-                        content = ('Would you like to buy this vending machine for $%s'):format(point.price),
+                        header = L('target.buy_vending'),
+                        content = L('alert.buy_vending_confirm'):format(point.price),
                         centered = true,
                         cancel = true
                     })
@@ -116,11 +116,11 @@ local function onEnter(point)
                 end
             },
             {
-                label = 'Sell Vending',
+                label = L('target.sell_vending'),
                 onSelect = function()
                     local alert = lib.alertDialog({
-                        header = 'Sell Vending Machine',
-                        content = ('Would you like to sell this vending machine for $%s'):format(math.floor(point.price * cfg.SellPertencage)),
+                        header = L('target.sell_vending'),
+                        content = L('alert.sell_vending_confirm'):format(math.floor(point.price * cfg.SellPertencage)),
                         centered = true,
                         cancel = true
                     })
@@ -140,7 +140,7 @@ local function onEnter(point)
                 end
             },
             {
-                label = 'Manage Vending',
+                label = L('target.manage_vending'),
                 icon = 'fa-solid fa-gear',
                 onSelect = function()
                     local data = lib.points.getClosestPoint()
@@ -161,7 +161,7 @@ local function onEnter(point)
             },
             {
                 icon = 'fas fa-shopping-basket',
-                label = 'Open Vending',
+                label = L('target.access_vending'),
                 onSelect = function()
                     exports.ox_inventory:openInventory('shop', { type = point.label, id = 1})
                 end,
@@ -210,7 +210,7 @@ end
 
 RegisterNetEvent('uniq_vending:sync', function(data, clear)
     Vendings = data
-    
+
     if clear then RemovePoints() end
 
     Wait(200)
@@ -247,12 +247,12 @@ RegisterNetEvent('uniq_vendingmachine:startCreating', function(players)
         return a.label < b.label
     end)
 
-    local input = lib.inputDialog('Dialog title', {
-        { type = 'input', label = 'Vending Name', required = true },
-        { type = 'number', label = 'Price', required = true, min = 1 },
-        { type = 'select', label = 'Select Object', required = true, options = cfg.Machines },
-        { type = 'select', label = 'Chose Owner of vending', options = players },
-        { type = 'multi-select', label = 'Chose Items', required = true, options = options }
+    local input = lib.inputDialog(L('input.vending_creator'), {
+        { type = 'input', label = L('input.vending_label'), required = true },
+        { type = 'number', label = L('input.vending_price'), required = true, min = 1 },
+        { type = 'select', label = L('input.select_object'), required = true, options = cfg.Machines },
+        { type = 'select', label = L('input.vending_owner'), options = players },
+        { type = 'multi-select', label = L('input.select_items'), required = true, options = options }
     })
 
     if not input then return end
@@ -271,8 +271,8 @@ RegisterNetEvent('uniq_vendingmachine:startCreating', function(players)
     local newItems = {}
     for k,v in pairs(input[5]) do
         local item = lib.inputDialog(items[v].label, {
-            { type = 'number', label = 'Item price', min = 1, required = true },
-            { type = 'number', label = 'Stock', min = 1, required = true },
+            { type = 'number', label = L('context.item_price'), min = 1, required = true },
+            { type = 'number', label = L('context.item_stock'), min = 1, required = true },
         }, {allowCancel = false})
         if not item then return end
 
@@ -286,15 +286,7 @@ RegisterNetEvent('uniq_vendingmachine:startCreating', function(players)
 
     vending.items = newItems
 
-
-    local text = {
-        ('By moving your mouse you are moving vending  \n'),
-        ('[←] - Rotate vending left  \n'),
-        ('[→] - Rotate vending right  \n'),
-        ('[ENTER] - Finish \n'),
-    }
-
-    lib.showTextUI(table.concat(text))
+    lib.showTextUI(table.concat(L('text_ui.help')))
     local heading = 0
     local obj
     local created = false

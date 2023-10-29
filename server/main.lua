@@ -79,8 +79,8 @@ RegisterNetEvent('uniq_vendingmachine:updateStock', function(data)
                 inventory = inventory,
             })
 
-            TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.stock_updated'):format(data.itemName, data.stock, data.price), 'success')
             TriggerClientEvent('uniq_vending:syncStock', -1, Vending)
+            TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.stock_updated'):format(data.itemName, data.stock, data.price), 'success')
         else
             TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.not_enough_items'), 'error')
         end
@@ -112,6 +112,7 @@ end)
 
 RegisterNetEvent('uniq_vendingmachine:buyVending', function(name)
     local src = source
+
     if Vending[name] then
         if exports.ox_inventory:Search(src, 'count', 'money') >= Vending[name].price then
             exports.ox_inventory:RemoveItem(src, 'money', Vending[name].price)
@@ -120,8 +121,9 @@ RegisterNetEvent('uniq_vendingmachine:buyVending', function(name)
             Vending[name].owner = identifier
             MySQL.update('UPDATE `uniq_vending` SET `data` = ? WHERE `name` = ?', {json.encode(Vending[name], {sort_keys = true}), name})
             TriggerClientEvent('uniq_vending:sync', -1, Vending, true)
+            TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.vending_bought'):format(Vending[name], Vending[name].price), 'success')
         else
-            -- nema kes
+            TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.not_enough_money'):format(Vending[name].price), 'error')
         end
     end
 end)
@@ -138,6 +140,7 @@ RegisterNetEvent('uniq_vendingmachine:sellVending', function(name)
 
         MySQL.update('UPDATE `uniq_vending` SET `data` = ? WHERE `name` = ?', {json.encode(Vending[name], {sort_keys = true}), name})
         TriggerClientEvent('uniq_vending:sync', -1, Vending, true)
+        TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.vending_sold'):format(Vending[name], price), 'success')
     end
 end)
 
@@ -150,12 +153,11 @@ RegisterNetEvent('uniq_vendingmachine:createVending', function(data)
         if active then
             data.owner = identifier
         else
-            TriggerClientEvent('uniq_vendingmachine:notify', src, 'Could not find player', 'error')
+            TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.no_targeted_owner'), 'error')
         end
     end
 
     MySQL.insert('INSERT INTO `uniq_vending` (name, data) VALUES (?, ?)', {data.name, json.encode(data)})
-
 
     local inventory = {}
 
@@ -169,6 +171,7 @@ RegisterNetEvent('uniq_vendingmachine:createVending', function(data)
     })
 
     exports.ox_inventory:RegisterStash(('stash-%s'):format(data.name), data.name, 1, 1000)
+    TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.vending_created'):format(data.name, data.price), 'error')
 
     Vending[data.name] = data
 
@@ -207,7 +210,6 @@ local function saveDB()
 
     MySQL.transaction(insertTable)
 end
-
 
 AddEventHandler('onResourceStop', function(name)
     if name == cache.resource then
