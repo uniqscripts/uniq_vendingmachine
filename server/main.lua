@@ -79,9 +79,10 @@ RegisterNetEvent('uniq_vendingmachine:updateStock', function(data)
                 inventory = inventory,
             })
 
+            TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.stock_updated'):format(data.itemName, data.stock, data.price), 'success')
             TriggerClientEvent('uniq_vending:syncStock', -1, Vending)
         else
-            -- notify nema tolko itema
+            TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.not_enough_items'), 'error')
         end
     end
 end)
@@ -90,7 +91,6 @@ end)
 lib.callback.register('uniq_vending:fetchVendings', function(source)
     return Vending
 end)
-
 
 lib.addCommand('addvending', {
     help = 'Command that helps you create ownable vending machine',
@@ -109,7 +109,6 @@ lib.addCommand('addvending', {
 
     TriggerClientEvent('uniq_vendingmachine:startCreating', source, options)
 end)
-
 
 RegisterNetEvent('uniq_vendingmachine:buyVending', function(name)
     local src = source

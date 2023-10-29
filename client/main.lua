@@ -28,7 +28,6 @@ RegisterNetEvent('uniq_vending:syncStock', function(data)
     Vendings = data
 end)
 
-
 local function OpenVending(name)
     if Vendings[name] then
         lib.registerContext({
@@ -209,7 +208,6 @@ function SetupVendings()
     end
 end
 
-
 RegisterNetEvent('uniq_vending:sync', function(data, clear)
     Vendings = data
     
@@ -343,7 +341,6 @@ AddEventHandler('onResourceStop', function(name)
         RemovePoints()
     end
 end)
-
 
 RegisterCommand('opentest', function (source, args, raw)
     exports.ox_inventory:openInventory('shop', { type = 'Test A', id = 1})
