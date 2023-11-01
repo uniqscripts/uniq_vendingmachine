@@ -10,12 +10,23 @@ function GetPlayerFromId(id)
     return QBCore.Functions.GetPlayer(id)
 end
 
+function GetJobs()
+    return QBCore.Shared.Jobs
+end
+
+function GetJob(id)
+    local Player = QBCore.Functions.GetPlayer(id)
+
+    if Player then
+        return Player.PlayerData.job.name, Player.PlayerData.job.grade
+    end
+end
 
 function GetIdentifier(id)
     local Player = QBCore.Functions.GetPlayer(id)
     
     if Player then
-        return true, Player.PlayerData.citizenid
+        return Player.PlayerData.citizenid
     end
 
     return false

@@ -25,7 +25,7 @@ MySQL.ready(function()
             local inventory = {}
 
             for _, item in pairs(data.items) do
-                table.insert(inventory, { name = item.name, price = item.price, count = item.stock })
+                table.insert(inventory, { name = item.name, price = item.price, count = item.stock, currency = item.currency })
             end
 
             exports.ox_inventory:RegisterShop(v.name, {
@@ -71,7 +71,7 @@ RegisterNetEvent('uniq_vendingmachine:updateStock', function(data)
                     v.stock = data.stock
                 end
 
-                table.insert(inventory, { name = v.name, price = v.price, count = v.stock })
+                table.insert(inventory, { name = v.name, price = v.price, count = v.stock, currency = v.currency })
             end
 
             exports.ox_inventory:RegisterShop(data.name, {
@@ -139,7 +139,7 @@ RegisterNetEvent('uniq_vending:server:dellvending', function(shop)
     if Vending[shop] then
         MySQL.query('DELETE FROM `uniq_vending` WHERE `name` = ?', { shop })
 
-        exports.ox_inventory:ClearInventory(shop)
+        exports.ox_inventory:ClearInventory(('stash-%s'):format(shop))
         Vending[shop] = nil
         TriggerClientEvent('uniq_vending:sync', -1, Vending, true)
     end
@@ -152,8 +152,14 @@ RegisterNetEvent('uniq_vendingmachine:buyVending', function(name)
         if exports.ox_inventory:Search(src, 'count', 'money') >= Vending[name].price then
             exports.ox_inventory:RemoveItem(src, 'money', Vending[name].price)
 
-            local active, identifier = GetIdentifier(src)
-            Vending[name].owner = identifier
+            if Vending[name].type == 'player' then
+                local identifier = GetIdentifier(src)
+                Vending[name].owner = identifier
+            elseif Vending[name].type == 'job' then
+                local job, grade = GetJob(src)
+
+                Vending[name].owner = { [job] = grade }
+            end
             MySQL.update('UPDATE `uniq_vending` SET `data` = ? WHERE `name` = ?', {json.encode(Vending[name], {sort_keys = true}), name})
             TriggerClientEvent('uniq_vending:sync', -1, Vending, true)
             TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.vending_bought'):format(Vending[name], Vending[name].price), 'success')
@@ -187,7 +193,7 @@ RegisterNetEvent('uniq_vendingmachine:createVending', function(data)
     local inventory = {}
 
     for _, item in pairs(data.items) do
-        table.insert(inventory, { name = item.name, price = item.price, count = item.stock })
+        table.insert(inventory, { name = item.name, price = item.price, count = item.stock, currency = item.currency })
     end
 
     exports.ox_inventory:RegisterShop(data.name, {
@@ -196,7 +202,7 @@ RegisterNetEvent('uniq_vendingmachine:createVending', function(data)
     })
 
     exports.ox_inventory:RegisterStash(('stash-%s'):format(data.name), data.name, 1, 1000)
-    TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.vending_created'):format(data.name, data.price), 'error')
+    TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.vending_created'):format(data.name, data.price), 'success')
 
     Vending[data.name] = data
 
@@ -214,6 +220,7 @@ RegisterNetEvent('uniq_vendingmachine:createVending', function(data)
             for k,v in pairs(Vending[payload.shopType].items) do
                 if v.name == payload.itemName then
                     v.stock -= 1
+                    TriggerClientEvent('uniq_vending:syncStock', -1, Vending)
                 end
             end
 

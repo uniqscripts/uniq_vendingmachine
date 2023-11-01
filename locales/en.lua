@@ -15,6 +15,7 @@ Locales['en'] = {
         stock_price = 'Stock: %s | Price: $%s',
         item_price = 'Item Price',
         item_stock = 'Item Stock',
+        item_currency = 'Item to be used as currency',
         items = 'Items',
     },
     target = {
@@ -42,7 +43,6 @@ Locales['en'] = {
         player_owned_desc = 'If you leave input empty then vending will go for sale',
         job_owned_label = 'Chose Job',
         job_owned_desc = 'If you leave input empty then vending will go for sale, if type is owned by job then when player buys vending it will apply to his job',
-        select_items = 'Select Items This Machine Will Have',
         chose_grade = 'Chose Grade',
         chose_grade_desc = 'Minimal grade that will have access vending managment'
     },

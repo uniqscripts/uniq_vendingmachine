@@ -13,5 +13,13 @@ return {
         ['unemployed'] = true,
     },
 
+    -- items that will not be displayed drop down menu
+    BlacklistedItems = {
+        --['water'] = true
+
+        ['ammo-9'] = true,
+        ['ammo-rifle2'] = true
+    },
+
     SellPertencage = 0.70 -- 70% of original price
 }
