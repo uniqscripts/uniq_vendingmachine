@@ -7,19 +7,17 @@ AddEventHandler('QBCore:Client:OnPlayerLoaded', function()
     PlayerLoaded = true
 end)
 
+
 RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
     table.wipe(PlayerData)
     PlayerLoaded = false
 end)
 
+
 RegisterNetEvent('QBCore:Player:SetPlayerData', function(val)
     PlayerData = val
 end)
 
-
-RegisterNetEvent('QBCore:Client:OnJobUpdate', function(JobInfo)
-	PlayerData.gang = JobInfo
-end)
 
 function GetIdentifier()
 	return PlayerData.citizenid

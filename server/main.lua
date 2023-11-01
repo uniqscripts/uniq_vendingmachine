@@ -103,11 +103,46 @@ lib.addCommand('addvending', {
     
     if IsQBCore() then
         for k,v in pairs(players) do
-            options[#options + 1] = { label = ('%s | %s'):format(v.PlayerData.name, v.PlayerData.source), value = v.PlayerData.source }
+            options[#options + 1] = { label = ('%s | %s'):format(v.PlayerData.name, v.PlayerData.source), value = v.PlayerData.citizenid }
+        end
+    elseif IsESX() then
+        for k,v in pairs(players) do
+            options[#options + 1] = { label = ('%s | %s'):format(v.getName(), v.source), value = v.identifier }
         end
     end
 
     TriggerClientEvent('uniq_vendingmachine:startCreating', source, options)
+end)
+
+
+lib.addCommand('dellvending', {
+    help = 'Command that helps you to delete vendings',
+    restricted = 'group.admin'
+}, function(source, args, raw)
+    if source == 0 then return end
+    local options = {}
+
+    if table.type(Vending) == 'empty' then
+
+        return -- nema
+    end
+
+    for k,v in pairs(Vending) do
+        options[#options + 1] = { label = v.name, value = v.name }
+    end
+
+    TriggerClientEvent('uniq_vending:client:dellvending', source, options)
+end)
+
+
+RegisterNetEvent('uniq_vending:server:dellvending', function(shop)
+    if Vending[shop] then
+        MySQL.query('DELETE FROM `uniq_vending` WHERE `name` = ?', { shop })
+
+        exports.ox_inventory:ClearInventory(shop)
+        Vending[shop] = nil
+        TriggerClientEvent('uniq_vending:sync', -1, Vending, true)
+    end
 end)
 
 RegisterNetEvent('uniq_vendingmachine:buyVending', function(name)
@@ -147,17 +182,7 @@ end)
 RegisterNetEvent('uniq_vendingmachine:createVending', function(data)
     local src = source
 
-    if data.owner ~= false then
-        local active, identifier = GetIdentifier(data.owner)
-
-        if active then
-            data.owner = identifier
-        else
-            TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.no_targeted_owner'), 'error')
-        end
-    end
-
-    MySQL.insert('INSERT INTO `uniq_vending` (name, data) VALUES (?, ?)', {data.name, json.encode(data)})
+    MySQL.insert('INSERT INTO `uniq_vending` (name, data) VALUES (?, ?)', {data.name, json.encode(data, {sort_keys = true})})
 
     local inventory = {}
 
@@ -199,13 +224,39 @@ RegisterNetEvent('uniq_vendingmachine:createVending', function(data)
     TriggerClientEvent('uniq_vending:sync', -1, Vending, false)
 end)
 
+lib.callback.register('uniq_vendingmachine:getJobs', function(source)
+    local jobs = GetJobs()
+    local options = {}
+
+    if IsESX() then
+        for k,v in pairs(jobs) do
+            if not cfg.BlacklsitedJobs[k] then
+                options[#options + 1] = { label = v.label, value = k }
+            end
+        end
+    end
+
+    return options
+end)
+
+lib.callback.register('uniq_vendingmachine:getGrades', function(source, job)
+    local jobs = GetJobs()
+    local options = {}
+
+    for k,v in pairs(jobs['police'].grades) do
+        options[#options + 1] = { label = v.label, value = v.grade }
+    end
+
+    return options
+end)
+
 
 local function saveDB()
     local insertTable = {}
     if table.type(Vending) == 'empty' then return end
 
     for k,v in pairs(Vending) do
-        insertTable[#insertTable + 1] = { query = 'UPDATE `uniq_vending` SET `data` = ? WHERE `name` = ?', values = { json.encode(v, {sort_keys = true}), v.name } }
+        insertTable[#insertTable + 1] = { query = 'UPDATE `uniq_vending` SET `data` = ? WHERE `name` = ?', values = { json.encode(v, {sort_keys = true} ), v.name } }
     end
 
     MySQL.transaction(insertTable)

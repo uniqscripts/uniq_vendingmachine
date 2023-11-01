@@ -1,7 +1,7 @@
 Locales = {}
+local lang = lib.require('config.config').Locale
 
 function L(key)
-    local lang = Config.Locale
     local value = Locales[lang]
 
     for k in key:gmatch("[^.]+") do

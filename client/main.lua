@@ -1,7 +1,7 @@
 local cfg = lib.require('config.config')
 local Vendings, Points = {}, {}
 
-function Notify(description, type)
+local function Notify(description, type)
     lib.notify({
         description = description,
         type = type
@@ -25,6 +25,7 @@ local function RemovePoints()
 end
 
 RegisterNetEvent('uniq_vending:syncStock', function(data)
+    if source == '' then return end
     Vendings = data
 end)
 
@@ -82,6 +83,145 @@ local function OpenVending(name)
     end
 end
 
+
+function ownerTarget(entity, point)
+    exports.ox_target:addLocalEntity(entity, {
+        {
+            label = L('target.buy_vending'),
+            icon = 'fa-solid fa-dollar-sign',
+            canInteract = function()
+                if point.owner == false then return true end
+
+                return false
+            end,
+            onSelect = function ()
+                local alert = lib.alertDialog({
+                    header = L('target.buy_vending'),
+                    content = L('alert.buy_vending_confirm'):format(point.price),
+                    centered = true,
+                    cancel = true
+                })
+
+                if alert == 'confirm' then
+                    TriggerServerEvent('uniq_vendingmachine:buyVending', point.label)
+                end
+            end
+        },
+        {
+            label = L('target.sell_vending'),
+            onSelect = function()
+                local alert = lib.alertDialog({
+                    header = L('target.sell_vending'),
+                    content = L('alert.sell_vending_confirm'):format(math.floor(point.price * cfg.SellPertencage)),
+                    centered = true,
+                    cancel = true
+                })
+
+                if alert == 'confirm' then
+                    TriggerServerEvent('uniq_vendingmachine:sellVending', point.label)
+                end
+            end,
+            canInteract = function ()
+                local data = lib.points.getClosestPoint()
+
+                if data then
+                    return data.owner == GetIdentifier()
+                end
+                
+                return false
+            end
+        },
+        {
+            label = L('target.manage_vending'),
+            icon = 'fa-solid fa-gear',
+            onSelect = function()
+                local data = lib.points.getClosestPoint()
+
+                if data then
+                    OpenVending(data.label)
+                end
+            end,
+            canInteract = function ()
+                local data = lib.points.getClosestPoint()
+
+                if data then
+                    return data.owner == GetIdentifier()
+                end
+                
+                return false
+            end
+        },
+        {
+            icon = 'fas fa-shopping-basket',
+            label = L('target.access_vending'),
+            onSelect = function()
+                exports.ox_inventory:openInventory('shop', { type = point.label, id = 1})
+            end,
+            distance = 2.0
+        }
+    })
+end
+
+function GenerateTarget(entity, point)
+    local options = {
+        {
+            icon = 'fas fa-shopping-basket',
+            label = L('target.access_vending'),
+            onSelect = function()
+                exports.ox_inventory:openInventory('shop', { type = point.label, id = 1})
+            end,
+            distance = 2.0
+        }
+    }
+
+    if not point.owner or point.owner == false then
+        options[#options + 1] = {
+            {
+                label = L('target.buy_vending'),
+                icon = 'fa-solid fa-dollar-sign',
+                onSelect = function ()
+                    local alert = lib.alertDialog({
+                        header = L('target.buy_vending'),
+                        content = L('alert.buy_vending_confirm'):format(point.price),
+                        centered = true,
+                        cancel = true
+                    })
+    
+                    if alert == 'confirm' then
+                        TriggerServerEvent('uniq_vendingmachine:buyVending', point.label)
+                    end
+                end
+            },
+        }
+    end
+
+    if type(point.owner) == 'string' then
+        local data = lib.points.getClosestPoint()
+        
+        if data and data.owner == GetIdentifier() then
+            options[#options+1] = {
+                {
+                    label = L('target.sell_vending'),
+                    onSelect = function()
+                        local alert = lib.alertDialog({
+                            header = L('target.sell_vending'),
+                            content = L('alert.sell_vending_confirm'):format(math.floor(point.price * cfg.SellPertencage)),
+                            centered = true,
+                            cancel = true
+                        })
+        
+                        if alert == 'confirm' then
+                            TriggerServerEvent('uniq_vendingmachine:sellVending', point.label)
+                        end
+                    end
+                },
+            }
+        end
+    end
+
+    exports.ox_target:addLocalEntity(entity, options)
+end
+
 local function onEnter(point)
     if not point.entity then
         local model = lib.requestModel(point.model)
@@ -93,81 +233,7 @@ local function onEnter(point)
 		PlaceObjectOnGroundProperly(entity)
 		FreezeEntityPosition(entity, true)
 
-        exports.ox_target:addLocalEntity(entity, {
-            {
-                label = L('target.buy_vending'),
-                icon = 'fa-solid fa-dollar-sign',
-                canInteract = function()
-                    if point.owner == false then return true end
-
-                    return false
-                end,
-                onSelect = function ()
-                    local alert = lib.alertDialog({
-                        header = L('target.buy_vending'),
-                        content = L('alert.buy_vending_confirm'):format(point.price),
-                        centered = true,
-                        cancel = true
-                    })
-
-                    if alert == 'confirm' then
-                        TriggerServerEvent('uniq_vendingmachine:buyVending', point.label)
-                    end
-                end
-            },
-            {
-                label = L('target.sell_vending'),
-                onSelect = function()
-                    local alert = lib.alertDialog({
-                        header = L('target.sell_vending'),
-                        content = L('alert.sell_vending_confirm'):format(math.floor(point.price * cfg.SellPertencage)),
-                        centered = true,
-                        cancel = true
-                    })
-
-                    if alert == 'confirm' then
-                        TriggerServerEvent('uniq_vendingmachine:sellVending', point.label)
-                    end
-                end,
-                canInteract = function ()
-                    local data = lib.points.getClosestPoint()
-
-                    if data then
-                        return data.owner == GetIdentifier()
-                    end
-                    
-                    return false
-                end
-            },
-            {
-                label = L('target.manage_vending'),
-                icon = 'fa-solid fa-gear',
-                onSelect = function()
-                    local data = lib.points.getClosestPoint()
-
-                    if data then
-                        OpenVending(data.label)
-                    end
-                end,
-                canInteract = function ()
-                    local data = lib.points.getClosestPoint()
-
-                    if data then
-                        return data.owner == GetIdentifier()
-                    end
-                    
-                    return false
-                end
-            },
-            {
-                icon = 'fas fa-shopping-basket',
-                label = L('target.access_vending'),
-                onSelect = function()
-                    exports.ox_inventory:openInventory('shop', { type = point.label, id = 1})
-                end,
-                distance = 2.0
-            }
-		})
+        GenerateTarget(entity, point)
 
         point.entity = entity
     end
@@ -209,6 +275,7 @@ function SetupVendings()
 end
 
 RegisterNetEvent('uniq_vending:sync', function(data, clear)
+    if source == '' then return end
     Vendings = data
 
     if clear then RemovePoints() end
@@ -239,8 +306,9 @@ RegisterNetEvent('uniq_vendingmachine:startCreating', function(players)
 
     local options = {}
     local items = exports.ox_inventory:Items()
+
     for item, data in pairs(items) do
-        options[#options + 1] = {label = data.label, value = data.name}
+        options[#options + 1] = { label = data.label, value = data.name }
     end
 
     table.sort(options, function(a, b)
@@ -250,8 +318,11 @@ RegisterNetEvent('uniq_vendingmachine:startCreating', function(players)
     local input = lib.inputDialog(L('input.vending_creator'), {
         { type = 'input', label = L('input.vending_label'), required = true },
         { type = 'number', label = L('input.vending_price'), required = true, min = 1 },
-        { type = 'select', label = L('input.select_object'), required = true, options = cfg.Machines },
-        { type = 'select', label = L('input.vending_owner'), options = players },
+        { type = 'select', label = L('input.select_object'), required = true, options = cfg.Machines, clearable = true },
+        { type = 'select', label = L('input.owned_type.title'), description = L('input.owned_type.desc'), options = {
+            { label = L('input.owned_type.a'), value = 'a' },
+            { label = L('input.owned_type.b'), value = 'b' },
+        }, clearable = true },
         { type = 'multi-select', label = L('input.select_items'), required = true, options = options }
     })
 
@@ -261,19 +332,58 @@ RegisterNetEvent('uniq_vendingmachine:startCreating', function(players)
     vending.price = input[2]
     vending.obj = input[3]
     
-    if input[4] then
-        vending.owner = input[4]
-    else
+    if not input[4] then
         vending.owner = false
     end
+
+    if input[4] == 'a' then
+        local owner = lib.inputDialog(L('input.vending_creator'), {
+            { type = 'select', label = L('input.player_owned_label'), description = L('input.player_owned_desc'), required = true, options = players, clearable = true }
+        })
+        if not owner then return end
+
+        vending.owner = owner[1]
+    elseif input[4] == 'b' then
+        local jobs = lib.callback.await('uniq_vendingmachine:getJobs', 100)
+
+        table.sort(jobs, function (a, b)
+            return a.label < b.label
+        end)
+
+        local owner = lib.inputDialog(L('input.vending_creator'), {
+            { type = 'select', label = L('input.job_owned_label'), description = L('input.job_owned_desc'), required = true, options = jobs, clearable = true }
+        })
+        if not owner then return end
+
+        local grades = lib.callback.await('uniq_vendingmachine:getGrades', 100, owner[1])
+
+        table.sort(grades, function (a, b)
+            return a.value < b.value
+        end)
+
+        local grade = lib.inputDialog(L('input.vending_creator'), {
+            { type = 'select', label = L('input.chose_grade'), description = L('input.chose_grade_desc'), required = true, options = grades, clearable = true }
+        })
+
+        if not grade then return end
+
+        vending.owner = {
+            [owner[1]] = grade[1]
+        }
+
+        print(json.encode(vending.owner, {indent = true}))
+    end
+
     vending.items = {}
 
     local newItems = {}
     for k,v in pairs(input[5]) do
+        
         local item = lib.inputDialog(items[v].label, {
             { type = 'number', label = L('context.item_price'), min = 1, required = true },
             { type = 'number', label = L('context.item_stock'), min = 1, required = true },
         }, {allowCancel = false})
+
         if not item then return end
 
         newItems[#newItems + 1] = {
@@ -326,6 +436,23 @@ RegisterNetEvent('uniq_vendingmachine:startCreating', function(players)
             Wait(0)
         end
     end)
+end)
+
+
+RegisterNetEvent('uniq_vending:client:dellvending', function(data)
+    if source == '' then return end
+
+    table.sort(data, function (a, b)
+        return a.value < b.value
+    end)
+
+    local input = lib.inputDialog('Delete Vending', {
+        { type = 'select', label = L('context.item_price'), required = true, clearable = true, options = data }
+    })
+
+    if not input then return end
+
+    TriggerServerEvent('uniq_vending:server:dellvending', input[1])
 end)
 
 AddEventHandler('onResourceStop', function(name)

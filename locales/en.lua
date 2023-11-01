@@ -32,15 +32,26 @@ Locales['en'] = {
         vending_label = 'Label',
         vending_price = 'Price',
         select_object = 'Select Object',
-        vending_owner = 'Select Vending Machine Owner',
+        owned_type = {
+            title = 'Chose Type',
+            desc = 'If you leave input empty then vending will go for sale',
+            a = 'Owned by player',
+            b = 'Owned by job'
+        },
+        player_owned_label = 'Chose Player',
+        player_owned_desc = 'If you leave input empty then vending will go for sale',
+        job_owned_label = 'Chose Job',
+        job_owned_desc = 'If you leave input empty then vending will go for sale, if type is owned by job then when player buys vending it will apply to his job',
         select_items = 'Select Items This Machine Will Have',
+        chose_grade = 'Chose Grade',
+        chose_grade_desc = 'Minimal grade that will have access vending managment'
     },
     text_ui = {
         help = {
             ('By moving your mouse you are moving the object  \n'),
             ('[←] - Rotate the object left  \n'),
             ('[→] - Rotate the object right  \n'),
-            ('[ENTER] - Finihs \n'),
+            ('[ENTER] - Finish \n'),
         }
     }
 }

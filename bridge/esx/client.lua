@@ -1,19 +1,18 @@
 if not IsESX() then return end
 
-ESX = exports['es_extended']:getSharedObject()
+local ESX = exports['es_extended']:getSharedObject()
 
 RegisterNetEvent('esx:playerLoaded')
 AddEventHandler('esx:playerLoaded', function(xPlayer)
 	PlayerData = xPlayer
 	PlayerLoaded = true
-
+    SetupVendings()
 end)
 
 
 RegisterNetEvent('esx:setJob')
 AddEventHandler('esx:setJob', function(job)
 	PlayerData.job = job
-    lib.hideTextUI()
 end)
 
 RegisterNetEvent('esx:onPlayerLogout', function()
@@ -22,18 +21,16 @@ RegisterNetEvent('esx:onPlayerLogout', function()
 end)
 
 
-function IsBoss()
-    return PlayerData.job.grade_name == 'boss'
-end
 
-function GetJob()
-    return PlayerData.job.name
+function GetIdentifier()
+	return PlayerData.identifier
 end
 
 AddEventHandler('onResourceStart', function(resource)
     if cache.resource == resource then
-        Wait(500)
+        Wait(1500)
         PlayerData = ESX.GetPlayerData()
         PlayerLoaded = true
+        SetupVendings()
     end
 end)
