@@ -24,11 +24,6 @@ local function RemovePoints()
     end
 end
 
-RegisterNetEvent('uniq_vending:syncStock', function(data)
-    if source == '' then return end
-    Vendings = data
-end)
-
 local function OpenVending(name)
     if Vendings[name] then
         lib.registerContext({
@@ -181,35 +176,44 @@ function GenerateMenu(point)
                     OpenVending(point.label)
                 end
             }
+
+            options[#options+1] = {
+                title = 'Stock',
+                onSelect = function()
+                    exports.ox_inventory:openInventory('stash', ('%s'):format(point.label))
+                end
+            }
         end
         -- owned by job
     elseif type(point.owner) == 'table' then
-        options[#options+1] = {
-            title = L('target.sell_vending'),
-            icon = 'fa-solid fa-dollar-sign',
-            groups = point.owner,
-            onSelect = function()
-                local alert = lib.alertDialog({
-                    header = L('target.sell_vending'),
-                    content = L('alert.sell_vending_confirm'):format(math.floor(point.price * cfg.SellPertencage)),
-                    centered = true,
-                    cancel = true
-                })
+        local job, grade = GetJob()
 
-                if alert == 'confirm' then
-                    TriggerServerEvent('uniq_vendingmachine:sellVending', point.label)
+        if point.owner[job] and point.owner[job] >= grade then
+            options[#options+1] = {
+                title = L('target.sell_vending'),
+                icon = 'fa-solid fa-dollar-sign',
+                onSelect = function()
+                    local alert = lib.alertDialog({
+                        header = L('target.sell_vending'),
+                        content = L('alert.sell_vending_confirm'):format(math.floor(point.price * cfg.SellPertencage)),
+                        centered = true,
+                        cancel = true
+                    })
+
+                    if alert == 'confirm' then
+                        TriggerServerEvent('uniq_vendingmachine:sellVending', point.label)
+                    end
                 end
-            end
-        }
+            }
 
-        options[#options+1] = {
-            title = L('target.manage_vending'),
-            icon = 'fa-solid fa-gear',
-            groups = point.owner,
-            onSelect = function()
-                OpenVending(point.label)
-            end
-        }
+            options[#options+1] = {
+                title = L('target.manage_vending'),
+                icon = 'fa-solid fa-gear',
+                onSelect = function()
+                    OpenVending(point.label)
+                end
+            }
+        end
     end
 
     menu.options = options
@@ -417,6 +421,23 @@ RegisterNetEvent('uniq_vending:client:dellvending', function(data)
     if not input then return end
 
     TriggerServerEvent('uniq_vending:server:dellvending', input[1])
+end)
+
+
+RegisterNetEvent('uniq_vending:selectCurrency', function(payload)
+    if source == '' then return end
+    local itemNames = {}
+
+    for item, data in pairs(exports.ox_inventory:Items()) do
+        itemNames[#itemNames + 1] = { label = data.label, value = data.name }
+    end
+
+    local input = lib.inputDialog(payload.fromSlot.label, {
+        { type = 'number', label = 'Price per item', required = true, min = 1 },
+        { type = 'select', label = 'Currency', required = true, clearable = true, options = itemNames }
+    }, { allowCancel = false })
+
+    TriggerServerEvent('uniq_vendingmachine:setData', input[1], input[2], payload)
 end)
 
 AddEventHandler('onResourceStop', function(name)

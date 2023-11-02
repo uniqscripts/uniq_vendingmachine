@@ -23,6 +23,10 @@ function GetIdentifier()
 	return PlayerData.citizenid
 end
 
+function GetJob()
+    return PlayerData.job.name, PlayerData.job.grade
+end
+
 AddEventHandler('onResourceStart', function(resource)
 	if resource == cache.resource then
 		Wait(1500)
