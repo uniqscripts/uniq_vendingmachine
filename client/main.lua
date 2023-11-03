@@ -1,14 +1,7 @@
 local cfg = lib.require('config.config')
+local raycast = lib.require('client.raycast')
 local Vendings, Points = {}, {}
 
-local function Notify(description, type)
-    lib.notify({
-        description = description,
-        type = type
-    })
-end
-
-RegisterNetEvent('uniq_vendingmachine:notify', Notify)
 
 local function RemovePoints()
     for k,v in pairs(Points) do
@@ -32,6 +25,7 @@ local function onEnter(point)
         local entity = CreateObject(model, point.coords.x, point.coords.y, point.coords.z, false, true, true)
 
         SetModelAsNoLongerNeeded(model)
+        SetEntityHeading(entity, point.heading)
 		PlaceObjectOnGroundProperly(entity)
 		FreezeEntityPosition(entity, true)
 
@@ -53,7 +47,7 @@ local function onExit(point)
 end
 
 local menu = {
-    id = 'uniq_vendingmachine:main',
+    id = 'uniq_vending:main',
     title = 'Vending Machine',
     options = {}
 }
@@ -83,7 +77,7 @@ function GenerateMenu(point)
                 })
 
                 if alert == 'confirm' then
-                    TriggerServerEvent('uniq_vendingmachine:buyVending', point.label)
+                    TriggerServerEvent('uniq_vending:buyVending', point.label)
                 end
             end
         }
@@ -104,7 +98,7 @@ function GenerateMenu(point)
                     })
     
                     if alert == 'confirm' then
-                        TriggerServerEvent('uniq_vendingmachine:sellVending', point.label)
+                        TriggerServerEvent('uniq_vending:sellVending', point.label)
                     end
                 end
             }
@@ -142,7 +136,7 @@ function GenerateMenu(point)
                     })
     
                     if alert == 'confirm' then
-                        TriggerServerEvent('uniq_vendingmachine:sellVending', point.label)
+                        TriggerServerEvent('uniq_vending:sellVending', point.label)
                     end
                 end
             }
@@ -219,7 +213,8 @@ function SetupVendings()
                 label = v.name,
                 owner = v.owner,
                 model = v.obj,
-                price = v.price
+                price = v.price,
+                heading = v.heading
             })
         end
     end
@@ -243,12 +238,13 @@ RegisterNetEvent('uniq_vending:sync', function(data, clear)
             label = v.name,
             owner = v.owner,
             model = v.obj,
-            price = v.price
+            price = v.price,
+            heading = v.heading
         })
     end
 end)
 
-RegisterNetEvent('uniq_vendingmachine:startCreating', function(players)
+RegisterNetEvent('uniq_vending:startCreating', function(players)
     if source == '' then return end
     local vending = {}
 
@@ -284,7 +280,7 @@ RegisterNetEvent('uniq_vendingmachine:startCreating', function(players)
         end
         vending.type = 'player'
     elseif input[4] == 'b' then
-        local jobs = lib.callback.await('uniq_vendingmachine:getJobs', 100)
+        local jobs = lib.callback.await('uniq_vending:getJobs', 100)
 
         table.sort(jobs, function (a, b)
             return a.label < b.label
@@ -297,7 +293,7 @@ RegisterNetEvent('uniq_vendingmachine:startCreating', function(players)
         if not owner[1] then
             vending.owner = false
         else
-            local grades = lib.callback.await('uniq_vendingmachine:getGrades', 100, owner[1])
+            local grades = lib.callback.await('uniq_vending:getGrades', 100, owner[1])
 
             table.sort(grades, function (a, b)
                 return a.value < b.value
@@ -323,7 +319,8 @@ RegisterNetEvent('uniq_vendingmachine:startCreating', function(players)
 
     CreateThread(function ()
         while true do
-            local hit, entityHit, coords, surfaceNormal, materialHash = lib.raycast.cam(511, 4, 74)
+            ---@diagnostic disable-next-line: need-check-nil
+            local hit, coords, entity = raycast(100.0)
     
             if not created then
                 created = true
@@ -332,18 +329,19 @@ RegisterNetEvent('uniq_vendingmachine:startCreating', function(players)
     
             if hit then
                 if IsControlPressed(0, 174) then
-                    heading += 1
+                    heading += 1.5
                 end
         
                 if IsControlPressed(0, 175) then
-                    heading -= 1
+                    heading -= 1.5
                 end
         
                 if IsDisabledControlPressed(0, 176) then
                     lib.hideTextUI()
-                    DeleteObject(obj)
                     vending.coords = coords
-                    TriggerServerEvent('uniq_vendingmachine:createVending', vending)
+                    vending.heading = GetEntityHeading(obj)
+                    DeleteObject(obj)
+                    TriggerServerEvent('uniq_vending:createVending', vending)
                     break
                 end
         
@@ -353,6 +351,8 @@ RegisterNetEvent('uniq_vendingmachine:startCreating', function(players)
             Wait(0)
         end
     end)
+
+    collectgarbage("collect")
 end)
 
 
@@ -392,7 +392,14 @@ RegisterNetEvent('uniq_vending:selectCurrency', function(payload)
         input[2] = 'money'
     end
 
-    TriggerServerEvent('uniq_vendingmachine:setData', input[1], input[2], payload)
+    TriggerServerEvent('uniq_vending:setData', input[1], input[2], payload)
+end)
+
+lib.callback.register('uniq_vending:choseVending', function(options)
+    local input = lib.inputDialog('', { { type = 'select', label = 'Chose Vending', required = true, options = options} })
+    if not input then return false end
+
+    return input[1]
 end)
 
 AddEventHandler('onResourceStop', function(name)

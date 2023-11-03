@@ -1,7 +1,8 @@
 Locales['en'] = {
     commands = {
         addvending = 'Command that helps you create ownable vending machine',
-        dellvending = 'Command that helps you to delete vendings'
+        dellvending = 'Command that helps you to delete vendings',
+        findvending = 'Command that teleports you to desired vending'
     },
     notify = {
         not_enough_money = 'You don\'t have enough money to buy this Vending Machine ($%s)',

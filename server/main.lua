@@ -3,7 +3,7 @@ local Vending = {}
 local buyHook, swapHook
 
 
-RegisterNetEvent('uniq_vendingmachine:setData', function(price, currency, payload)
+RegisterNetEvent('uniq_vending:setData', function(price, currency, payload)
     exports.ox_inventory:SetMetadata(payload.toInventory, payload.toSlot, { price = price, currency = currency })
     Wait(200)
     local items = exports.ox_inventory:GetInventoryItems(payload.toInventory, false)
@@ -21,7 +21,7 @@ RegisterNetEvent('uniq_vendingmachine:setData', function(price, currency, payloa
     end
 end)
 
-RegisterNetEvent('uniq_vendingmachine:SetUpStore', function(store)
+RegisterNetEvent('uniq_vending:SetUpStore', function(store)
     Wait(300)
     local items = exports.ox_inventory:GetInventoryItems(store, false)
     local inventory = {}
@@ -52,14 +52,14 @@ local function SetUpHooks(inventoryFilter)
     swapHook = exports.ox_inventory:registerHook('swapItems', function(payload)
         if payload.toType == 'stash' then
             if cfg.BlacklistedItems[payload.fromSlot.name] then
-                TriggerClientEvent('uniq_vendingmachine:notify', payload.source, L('notify.cant_put'), 'error')
+                lib.notify(payload.source, { description = L('notify.cant_put'), type = 'error' })
 
                 return false
             end
 
             TriggerClientEvent('uniq_vending:selectCurrency', payload.source, payload)
         else
-            TriggerEvent('uniq_vendingmachine:SetUpStore', payload.fromInventory)
+            TriggerEvent('uniq_vending:SetUpStore', payload.fromInventory)
         end
 
         return true
@@ -84,6 +84,8 @@ MySQL.ready(function()
         ]])
     end
 
+    Wait(50)
+
     local result = MySQL.query.await('SELECT * FROM `uniq_vending`')
 
     if result[1] then
@@ -98,7 +100,7 @@ MySQL.ready(function()
 
             table.insert(inventoryFilter, v.name)
 
-            TriggerEvent('uniq_vendingmachine:SetUpStore', v.name)
+            TriggerEvent('uniq_vending:SetUpStore', v.name)
         end
 
         SetUpHooks(inventoryFilter)
@@ -128,7 +130,7 @@ lib.addCommand('addvending', {
         end
     end
 
-    TriggerClientEvent('uniq_vendingmachine:startCreating', source, options)
+    TriggerClientEvent('uniq_vending:startCreating', source, options)
 end)
 
 
@@ -145,7 +147,7 @@ lib.addCommand('dellvending', {
     end
 
     if count == 0 then
-        return TriggerClientEvent('uniq_vendingmachine:notify', source, L('notify.no_vendings'), 'error')
+        return lib.notify(source, { description = L('notify.no_vendings'), type = 'error' })
     end
 
     for k,v in pairs(Vending) do
@@ -156,19 +158,50 @@ lib.addCommand('dellvending', {
 end)
 
 
+lib.addCommand('findvending', {
+    help = L('commands.findvending'),
+    restricted = 'group.admin'
+}, function(source, args, raw)
+    if source == 0 then return end
+    local options = {}
+    local count = 0
+
+    for k,v in pairs(Vending) do
+        count += 1
+    end
+
+    if count == 0 then
+        return lib.notify(source, { description = L('notify.no_vendings'), type = 'error' })
+    end
+
+    for k,v in pairs(Vending) do
+        options[#options + 1] = { label = v.name, value = v.name }
+    end
+
+    local cb = lib.callback.await('uniq_vending:choseVending', source, options)
+
+    if cb then
+        if Vending[cb] then
+            local coords = Vending[cb].coords
+            local ped = GetPlayerPed(source)
+            SetEntityCoords(ped, coords.x, coords.y + 1, coords.z, false, false , false, false)
+        end
+    end
+end)
+
 RegisterNetEvent('uniq_vending:server:dellvending', function(shop)
     if Vending[shop] then
         MySQL.query('DELETE FROM `uniq_vending` WHERE `name` = ?', { shop })
 
         exports.ox_inventory:ClearInventory(('stash-money-%s'):format(shop))
         exports.ox_inventory:ClearInventory(('%s'):format(shop))
-        -- drugi items
+
         Vending[shop] = nil
         TriggerClientEvent('uniq_vending:sync', -1, Vending, true)
     end
 end)
 
-RegisterNetEvent('uniq_vendingmachine:buyVending', function(name)
+RegisterNetEvent('uniq_vending:buyVending', function(name)
     local src = source
 
     if Vending[name] then
@@ -185,15 +218,20 @@ RegisterNetEvent('uniq_vendingmachine:buyVending', function(name)
             end
             MySQL.update('UPDATE `uniq_vending` SET `data` = ? WHERE `name` = ?', {json.encode(Vending[name], {sort_keys = true}), name})
             TriggerClientEvent('uniq_vending:sync', -1, Vending, true)
-            TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.vending_bought'):format(Vending[name].name, Vending[name].price), 'success')
+            lib.notify(src, { description = L('notify.vending_bought'):format(Vending[name].name, Vending[name].price), type = 'success' })
         else
-            TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.not_enough_money'):format(Vending[name].price), 'error')
+            lib.notify(src, { description = L('notify.not_enough_money'):format(Vending[name].price), type = 'error' })
         end
     end
 end)
 
 
-RegisterNetEvent('uniq_vendingmachine:sellVending', function(name)
+RegisterCommand('adad', function (source, args, raw)
+    lib.notify(source, { description = 'ad', type = 'success' })
+end)
+
+
+RegisterNetEvent('uniq_vending:sellVending', function(name)
     local src = source
     
     if Vending[name] then
@@ -204,17 +242,17 @@ RegisterNetEvent('uniq_vendingmachine:sellVending', function(name)
 
         MySQL.update('UPDATE `uniq_vending` SET `data` = ? WHERE `name` = ?', {json.encode(Vending[name], {sort_keys = true}), name})
         TriggerClientEvent('uniq_vending:sync', -1, Vending, true)
-        TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.vending_sold'):format(Vending[name], price), 'success')
+        lib.notify(src, { description = L('notify.vending_sold'):format(Vending[name], price), type = 'success' })
     end
 end)
 
-RegisterNetEvent('uniq_vendingmachine:createVending', function(data)
+RegisterNetEvent('uniq_vending:createVending', function(data)
     local src = source
 
     MySQL.insert('INSERT INTO `uniq_vending` (name, data) VALUES (?, ?)', {data.name, json.encode(data, {sort_keys = true})})
     
     RegisterStash(data.name)
-    TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.vending_created'):format(data.name, data.price), 'success')
+    lib.notify(src, { description = L('notify.vending_created'):format(data.name, data.price), type = 'success' })
 
     Vending[data.name] = data
     
@@ -225,14 +263,14 @@ RegisterNetEvent('uniq_vendingmachine:createVending', function(data)
     end
 
 
-    TriggerEvent('uniq_vendingmachine:SetUpStore', data.name)
+    TriggerEvent('uniq_vending:SetUpStore', data.name)
 
     SetUpHooks(inventoryFilter)
 
     TriggerClientEvent('uniq_vending:sync', -1, Vending, false)
 end)
 
-lib.callback.register('uniq_vendingmachine:getJobs', function(source)
+lib.callback.register('uniq_vending:getJobs', function(source)
     local jobs = GetJobs()
     local options = {}
 
@@ -247,7 +285,7 @@ lib.callback.register('uniq_vendingmachine:getJobs', function(source)
     return options
 end)
 
-lib.callback.register('uniq_vendingmachine:getGrades', function(source, job)
+lib.callback.register('uniq_vending:getGrades', function(source, job)
     local jobs = GetJobs()
     local options = {}
 
