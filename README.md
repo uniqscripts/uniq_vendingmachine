@@ -15,6 +15,5 @@
 
 
 ![](https://img.shields.io/github/downloads/uniqscripts/uniq_vendingmachine/total?logo=github)
-![](https://img.shields.io/github/downloads/uniqscripts/uniq_vendingmachine/latest/total?logo=github)
 ![](https://img.shields.io/github/contributors/uniqscripts/uniq_vendingmachine?logo=github)
 ![](https://img.shields.io/github/v/release/uniqscripts/uniq_vendingmachine?logo=github) 
