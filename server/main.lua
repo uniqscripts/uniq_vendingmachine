@@ -336,3 +336,6 @@ AddEventHandler('onResourceStop', function(name)
         saveDB()
     end
 end)
+
+
+lib.versionCheck('uniqscripts/uniq_vendingmachine')
