@@ -1,7 +1,6 @@
 local cfg = lib.require('config.config')
 local Vending = {}
-local hookId, swapItems
-
+local buyHook, swapHook
 
 
 RegisterNetEvent('uniq_vendingmachine:setData', function(price, currency, payload)
@@ -15,13 +14,62 @@ RegisterNetEvent('uniq_vendingmachine:setData', function(price, currency, payloa
             inventory[#inventory + 1] = { name = v.name, metadata = v.metadata, price = v.metadata.price, currency = v.metadata.currency, count = v.count }
         end
 
-
         exports.ox_inventory:RegisterShop(payload.toInventory, {
             name = payload.toInventory,
             inventory = inventory,
         })
     end
 end)
+
+RegisterNetEvent('uniq_vendingmachine:SetUpStore', function(store)
+    Wait(300)
+    local items = exports.ox_inventory:GetInventoryItems(store, false)
+    local inventory = {}
+
+    if items then
+        for k,v in pairs(items) do
+            inventory[#inventory + 1] = { name = v.name, metadata = v.metadata, price = v.metadata.price, currency = v.metadata.currency, count = v.count }
+        end
+
+        exports.ox_inventory:RegisterShop(store, {
+            name = store,
+            inventory = inventory,
+        })
+    end
+end)
+
+local function SetUpHooks(inventoryFilter)
+    if buyHook then exports.ox_inventory:removeHooks(buyHook) end
+    if swapHook then exports.ox_inventory:removeHooks(swapHook) end
+
+    buyHook = exports.ox_inventory:registerHook('buyItem', function(payload)
+        exports.ox_inventory:RemoveItem(payload.shopType, payload.itemName, payload.count)
+        exports.ox_inventory:AddItem(('stash-money-%s'):format(payload.shopType), payload.currency, payload.totalPrice)
+
+        return true
+    end, { inventoryFilter = inventoryFilter })
+
+    swapHook = exports.ox_inventory:registerHook('swapItems', function(payload)
+        if payload.toType == 'stash' then
+            if cfg.BlacklistedItems[payload.fromSlot.name] then
+                TriggerClientEvent('uniq_vendingmachine:notify', payload.source, L('notify.cant_put'), 'error')
+
+                return false
+            end
+
+            TriggerClientEvent('uniq_vending:selectCurrency', payload.source, payload)
+        else
+            TriggerEvent('uniq_vendingmachine:SetUpStore', payload.fromInventory)
+        end
+
+        return true
+    end, { inventoryFilter = inventoryFilter })
+end
+
+local function RegisterStash(name)
+    exports.ox_inventory:RegisterStash(('stash-money-%s'):format(name), name, 100, 100000)
+    exports.ox_inventory:RegisterStash(('%s'):format(name), name, 100, 100000)
+end
 
 MySQL.ready(function()
     Wait(1000) -- to not fetch old data from sql
@@ -44,70 +92,25 @@ MySQL.ready(function()
         for k,v in pairs(result) do
             local data = json.decode(v.data)
 
-            exports.ox_inventory:RegisterStash(('stash-money-%s'):format(data.name), v.name, 1, 1000)
-            exports.ox_inventory:RegisterStash(('%s'):format(data.name), v.name, 100, 100000)
+            RegisterStash(data.name)
 
             Vending[v.name] = data
 
             table.insert(inventoryFilter, v.name)
+
+            TriggerEvent('uniq_vendingmachine:SetUpStore', v.name)
         end
 
-
-        hookId = exports.ox_inventory:registerHook('buyItem', function(payload)
-            print(json.encode(payload, {indent = true}))
-            exports.ox_inventory:RemoveItem(payload.shopType, payload.itemName, payload.count)
-            exports.ox_inventory:AddItem(('stash-%s'):format(payload.shopType), 'money', payload.totalPrice)
-
-            return true
-        end, { inventoryFilter = inventoryFilter })
-
-        swapItems = exports.ox_inventory:registerHook('swapItems', function(payload)
-            if payload.toType == 'stash' then
-                TriggerClientEvent('uniq_vending:selectCurrency', payload.source, payload)
-            end
-
-            return true
-        end, { inventoryFilter = inventoryFilter })
+        SetUpHooks(inventoryFilter)
     end
 end)
-
-
-RegisterNetEvent('uniq_vendingmachine:updateStock', function(data)
-    local src = source
-
-    if Vending[data.name] then
-        if exports.ox_inventory:Search(src, 'count', data.itemName) >= data.stock then
-            exports.ox_inventory:RemoveItem(src, data.itemName, data.stock)
-
-            local inventory = {}
-            for k,v in pairs(Vending[data.name].items) do
-                if v.name == data.itemName then
-                    v.price = data.price
-                    v.stock = data.stock
-                end
-
-                table.insert(inventory, { name = v.name, price = v.price, count = v.stock, currency = v.currency })
-            end
-
-            exports.ox_inventory:RegisterShop(data.name, {
-                name = data.name,
-                inventory = inventory,
-            })
-
-            TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.stock_updated'):format(data.itemName, data.stock, data.price), 'success')
-        else
-            TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.not_enough_items'), 'error')
-        end
-    end
-end)
-
 
 lib.callback.register('uniq_vending:fetchVendings', function(source)
     return Vending
 end)
 
 lib.addCommand('addvending', {
-    help = 'Command that helps you create ownable vending machine',
+    help = L('commands.addvending'),
     restricted = 'group.admin'
 }, function(source, args, raw)
     if source == 0 then return end
@@ -130,15 +133,19 @@ end)
 
 
 lib.addCommand('dellvending', {
-    help = 'Command that helps you to delete vendings',
+    help = L('commands.dellvending'),
     restricted = 'group.admin'
 }, function(source, args, raw)
     if source == 0 then return end
     local options = {}
+    local count = 0
 
-    if table.type(Vending) == 'empty' then
+    for k,v in pairs(Vending) do
+        count += 1
+    end
 
-        return -- nema
+    if count == 0 then
+        return TriggerClientEvent('uniq_vendingmachine:notify', source, L('notify.no_vendings'), 'error')
     end
 
     for k,v in pairs(Vending) do
@@ -154,6 +161,7 @@ RegisterNetEvent('uniq_vending:server:dellvending', function(shop)
         MySQL.query('DELETE FROM `uniq_vending` WHERE `name` = ?', { shop })
 
         exports.ox_inventory:ClearInventory(('stash-money-%s'):format(shop))
+        exports.ox_inventory:ClearInventory(('%s'):format(shop))
         -- drugi items
         Vending[shop] = nil
         TriggerClientEvent('uniq_vending:sync', -1, Vending, true)
@@ -177,7 +185,7 @@ RegisterNetEvent('uniq_vendingmachine:buyVending', function(name)
             end
             MySQL.update('UPDATE `uniq_vending` SET `data` = ? WHERE `name` = ?', {json.encode(Vending[name], {sort_keys = true}), name})
             TriggerClientEvent('uniq_vending:sync', -1, Vending, true)
-            TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.vending_bought'):format(Vending[name], Vending[name].price), 'success')
+            TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.vending_bought'):format(Vending[name].name, Vending[name].price), 'success')
         else
             TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.not_enough_money'):format(Vending[name].price), 'error')
         end
@@ -204,23 +212,11 @@ RegisterNetEvent('uniq_vendingmachine:createVending', function(data)
     local src = source
 
     MySQL.insert('INSERT INTO `uniq_vending` (name, data) VALUES (?, ?)', {data.name, json.encode(data, {sort_keys = true})})
-
-    local inventory = {}
-
-    for _, item in pairs(data.items) do
-        table.insert(inventory, { name = item.name, price = item.price, count = item.stock, currency = item.currency })
-    end
-
-    exports.ox_inventory:RegisterShop(data.name, {
-        name = data.name,
-        inventory = inventory,
-    })
-
-    exports.ox_inventory:RegisterStash(('stash-money-%s'):format(data.name), data.name, 1, 1000)
+    
+    RegisterStash(data.name)
     TriggerClientEvent('uniq_vendingmachine:notify', src, L('notify.vending_created'):format(data.name, data.price), 'success')
 
     Vending[data.name] = data
-
     
     local inventoryFilter = {}
 
@@ -228,17 +224,10 @@ RegisterNetEvent('uniq_vendingmachine:createVending', function(data)
         table.insert(inventoryFilter, v.name)
     end
 
-    hookId = exports.ox_inventory:registerHook('buyItem', function(payload)
-        exports.ox_inventory:AddItem(('stash-%s'):format(payload.shopType), 'money', payload.totalPrice)
 
-        for k,v in pairs(Vending[payload.shopType].items) do
-            if v.name == payload.itemName then
-                v.stock -= 1
-            end
-        end
+    TriggerEvent('uniq_vendingmachine:SetUpStore', data.name)
 
-        return true
-    end, { inventoryFilter = inventoryFilter })
+    SetUpHooks(inventoryFilter)
 
     TriggerClientEvent('uniq_vending:sync', -1, Vending, false)
 end)
@@ -283,9 +272,8 @@ end
 
 AddEventHandler('onResourceStop', function(name)
     if name == cache.resource then
+        exports.ox_inventory:removeHooks(buyHook)
+        exports.ox_inventory:removeHooks(swapHook)
         saveDB()
-
-        exports.ox_inventory:removeHooks(hookId)
-        exports.ox_inventory:removeHooks(swapItems)
     end
 end)

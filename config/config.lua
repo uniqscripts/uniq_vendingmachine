@@ -13,12 +13,15 @@ return {
         ['unemployed'] = true,
     },
 
-    -- items that will not be displayed drop down menu
+    -- items that cant be put for sale
     BlacklistedItems = {
-        --['water'] = true
+        ['money'] = true,
+        ['black_money'] = true,
+    },
 
-        ['ammo-9'] = true,
-        ['ammo-rifle2'] = true
+    -- items that cant be used as currency
+    CantBeCurrency = {
+        --['water'] = true
     },
 
     SellPertencage = 0.70 -- 70% of original price

@@ -1,12 +1,16 @@
 Locales['en'] = {
+    commands = {
+        addvending = 'Command that helps you create ownable vending machine',
+        dellvending = 'Command that helps you to delete vendings'
+    },
     notify = {
-        not_enough_items = 'You don\'t have enough items in your inventory',
         not_enough_money = 'You don\'t have enough money to buy this Vending Machine ($%s)',
-        stock_updated = 'You have updated item %s. Stock: %s, Price: %s',
         vending_bought = 'You have bought Vending Machine "%s" for $%s',
         vending_sold = 'You have sold Vending Machine "%s" for $%s',
         no_targeted_owner = 'Could not find targeted owner',
         vending_created = 'You have created Vending Machine "%s". Price: $%s',
+        cant_put = 'You cant\'t put this item for sale',
+        no_vendings = 'There is no created vendings'
     },
     context = {
         vending_settings = 'Vending Settings',
@@ -17,12 +21,14 @@ Locales['en'] = {
         item_stock = 'Item Stock',
         item_currency = 'Item to be used as currency',
         items = 'Items',
-    },
-    target = {
         buy_vending = 'Buy Vending Machine',
         sell_vending = 'Sell Vending Machine',
         manage_vending = 'Manage Vending Machine',
-        access_vending = 'Access Vending Machine',
+        access_vending = 'Access Vending',
+        item_price_per_one = 'Price per item',
+        currency = 'Currency',
+        currency_desc = 'If you leave empty then currency will be money',
+        stock = 'Vending Stock'
     },
     alert = {
         buy_vending_confirm = 'Would you like to buy this Vending Machine for $%s?',

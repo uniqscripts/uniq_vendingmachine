@@ -24,66 +24,6 @@ local function RemovePoints()
     end
 end
 
-local function OpenVending(name)
-    if Vendings[name] then
-        lib.registerContext({
-            id = 'uniq_vendingmachine:openVendingSettigs',
-            title = L('context.vending_settings'),
-            options = {
-                {
-                    title = L('context.money'),
-                    onSelect = function()
-                        exports.ox_inventory:openInventory('stash', ('stash-%s'):format(name))
-                    end
-                },
-                {
-                    title = L('context.update_stock'),
-                    onSelect = function()
-                        local options = {}
-                        for k,v in pairs(Vendings[name].items) do
-                            options[#options + 1] = {
-                                icon = ('https://cfx-nui-ox_inventory/web/images/%s.png'):format(v.name),
-                                title = v.label,
-                                description = L('context.stock_price'):format(v.stock, v.price),
-                                arrow = true,
-                                onSelect = function ()
-                                    local item = lib.inputDialog(v.label, {
-                                        { type = 'number', label = L('context.item_price'), min = 1, required = true, default = v.price },
-                                        { type = 'number', label = L('context.item_stock'), min = 1, required = true, default = v.stock },
-                                    })
-                                    if not item then return end
-
-                                    TriggerServerEvent('uniq_vendingmachine:updateStock', {
-                                        name = name,
-                                        itemName = v.name,
-                                        price = item[1],
-                                        stock = item[2]
-                                    })
-                                end
-                            }
-                        end
-                        lib.registerContext({
-                            id = 'uniq_vendingmachine:openVendingSettigs:sun',
-                            title = L('context.items'),
-                            options = options
-                        })
-
-                        lib.showContext('uniq_vendingmachine:openVendingSettigs:sun')
-                    end
-                },
-                {
-                    title = 'Add New Item',
-                    onSelect = function()
-                        
-                    end
-                }
-            }
-        })
-
-        lib.showContext('uniq_vendingmachine:openVendingSettigs')
-    end
-end
-
 local function onEnter(point)
     if not point.entity then
         local model = lib.requestModel(point.model)
@@ -122,7 +62,7 @@ function GenerateMenu(point)
     local options = {
         {
             icon = 'fas fa-shopping-basket',
-            title = L('target.access_vending'),
+            title = L('context.access_vending'),
             onSelect = function()
                 exports.ox_inventory:openInventory('shop', { type = point.label, id = 1})
             end,
@@ -132,11 +72,11 @@ function GenerateMenu(point)
 
     if not point.owner or point.owner == false then
         options[#options + 1] = {
-            title = L('target.buy_vending'),
+            title = L('context.buy_vending'),
             icon = 'fa-solid fa-dollar-sign',
             onSelect = function ()
                 local alert = lib.alertDialog({
-                    header = L('target.buy_vending'),
+                    header = L('context.buy_vending'),
                     content = L('alert.buy_vending_confirm'):format(point.price),
                     centered = true,
                     cancel = true
@@ -153,11 +93,11 @@ function GenerateMenu(point)
     if type(point.owner) == 'string' then
         if point.owner == GetIdentifier() then
             options[#options+1] = {
-                title = L('target.sell_vending'),
-                icon = 'fa-solid fa-dollar-sign',
+                title = L('context.sell_vending'),
+                icon = 'fa-solid fa-money-bill-trend-up',
                 onSelect = function()
                     local alert = lib.alertDialog({
-                        header = L('target.sell_vending'),
+                        header = L('context.sell_vending'),
                         content = L('alert.sell_vending_confirm'):format(math.floor(point.price * cfg.SellPertencage)),
                         centered = true,
                         cancel = true
@@ -168,19 +108,20 @@ function GenerateMenu(point)
                     end
                 end
             }
-            
-            options[#options+1] = {
-                title = L('target.manage_vending'),
-                icon = 'fa-solid fa-gear',
+
+            options[#options + 1] = {
+                title = L('context.stock'),
+                icon = 'fa-solid fa-box',
                 onSelect = function()
-                    OpenVending(point.label)
+                    exports.ox_inventory:openInventory('stash', ('%s'):format(point.label))
                 end
             }
 
-            options[#options+1] = {
-                title = 'Stock',
+            options[#options + 1] = {
+                title = L('context.money'),
+                icon = 'fa-solid fa-sack-dollar',
                 onSelect = function()
-                    exports.ox_inventory:openInventory('stash', ('%s'):format(point.label))
+                    exports.ox_inventory:openInventory('stash', ('stash-money-%s'):format(point.label))
                 end
             }
         end
@@ -190,27 +131,35 @@ function GenerateMenu(point)
 
         if point.owner[job] and point.owner[job] >= grade then
             options[#options+1] = {
-                title = L('target.sell_vending'),
-                icon = 'fa-solid fa-dollar-sign',
+                title = L('context.sell_vending'),
+                icon = 'fa-solid fa-money-bill-trend-up',
                 onSelect = function()
                     local alert = lib.alertDialog({
-                        header = L('target.sell_vending'),
+                        header = L('context.sell_vending'),
                         content = L('alert.sell_vending_confirm'):format(math.floor(point.price * cfg.SellPertencage)),
                         centered = true,
                         cancel = true
                     })
-
+    
                     if alert == 'confirm' then
                         TriggerServerEvent('uniq_vendingmachine:sellVending', point.label)
                     end
                 end
             }
 
-            options[#options+1] = {
-                title = L('target.manage_vending'),
-                icon = 'fa-solid fa-gear',
+            options[#options + 1] = {
+                title = L('context.stock'),
+                icon = 'fa-solid fa-box',
                 onSelect = function()
-                    OpenVending(point.label)
+                    exports.ox_inventory:openInventory('stash', ('%s'):format(point.label))
+                end
+            }
+
+            options[#options + 1] = {
+                title = L('context.money'),
+                icon = 'fa-solid fa-sack-dollar',
+                onSelect = function()
+                    exports.ox_inventory:openInventory('stash', ('stash-money-%s'):format(point.label))
                 end
             }
         end
@@ -429,13 +378,19 @@ RegisterNetEvent('uniq_vending:selectCurrency', function(payload)
     local itemNames = {}
 
     for item, data in pairs(exports.ox_inventory:Items()) do
-        itemNames[#itemNames + 1] = { label = data.label, value = data.name }
+        if not cfg.CantBeCurrency[data.name] then
+            itemNames[#itemNames + 1] = { label = data.label, value = data.name }
+        end
     end
 
     local input = lib.inputDialog(payload.fromSlot.label, {
-        { type = 'number', label = 'Price per item', required = true, min = 1 },
-        { type = 'select', label = 'Currency', required = true, clearable = true, options = itemNames }
+        { type = 'number', label = L('context.item_price_per_one'), required = true, min = 1 },
+        { type = 'select', label = L('context.currency'), description = L('context.currency_desc'), clearable = true, options = itemNames }
     }, { allowCancel = false })
+
+    if not input[2] then
+        input[2] = 'money'
+    end
 
     TriggerServerEvent('uniq_vendingmachine:setData', input[1], input[2], payload)
 end)
