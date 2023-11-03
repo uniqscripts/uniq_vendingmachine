@@ -18,7 +18,7 @@ function GetJob(id)
     local Player = QBCore.Functions.GetPlayer(id)
 
     if Player then
-        return Player.PlayerData.job.name, Player.PlayerData.job.grade
+        return Player.PlayerData.job.name, Player.PlayerData.job.grade.level
     end
 end
 

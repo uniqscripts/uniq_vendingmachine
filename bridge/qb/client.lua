@@ -24,7 +24,7 @@ function GetIdentifier()
 end
 
 function GetJob()
-    return PlayerData.job.name, PlayerData.job.grade
+    return PlayerData.job.name, PlayerData.job.grade.level
 end
 
 AddEventHandler('onResourceStart', function(resource)

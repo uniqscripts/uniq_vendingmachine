@@ -1,6 +1,6 @@
 local cfg = lib.require('config.config')
 local raycast = lib.require('client.raycast')
-local Vendings, Points = {}, {}
+local Points, Blips = {}, {}
 
 
 local function RemovePoints()
@@ -123,7 +123,7 @@ function GenerateMenu(point)
     elseif type(point.owner) == 'table' then
         local job, grade = GetJob()
 
-        if point.owner[job] and point.owner[job] >= grade then
+        if point.owner[job] and grade >= point.owner[job] then
             options[#options+1] = {
                 title = L('context.sell_vending'),
                 icon = 'fa-solid fa-money-bill-trend-up',
@@ -197,12 +197,30 @@ CreateThread(function()
     end
 end)
 
+
+local function createBlip(data, coords)
+    local blip = Blips[#Blips + 1]
+    blip = AddBlipForCoord(coords.x, coords.y, coords.z)
+
+    SetBlipSprite (blip, data.sprite)
+    SetBlipDisplay(blip, 4)
+    SetBlipScale  (blip, data.scale)
+    SetBlipColour (blip, data.colour)
+    SetBlipAsShortRange(blip, true)
+
+    BeginTextCommandSetBlipName('STRING')
+    AddTextComponentSubstringPlayerName(data.name)
+    EndTextCommandSetBlipName(blip)
+end
+
 function SetupVendings()
+    for k,v in pairs(Blips) do
+        RemoveBlip(v)
+        Blips[k] = nil
+    end
    local data = lib.callback.await('uniq_vending:fetchVendings', false)
 
     if data then
-        Vendings = data
-
         for k,v in pairs(data) do
             Points[#Points + 1] = lib.points.new({
                 coords = v.coords,
@@ -216,13 +234,21 @@ function SetupVendings()
                 price = v.price,
                 heading = v.heading
             })
+
+            if v.blip then
+                createBlip(v.blip, v.coords)
+            end
         end
     end
 end
 
 RegisterNetEvent('uniq_vending:sync', function(data, clear)
     if source == '' then return end
-    Vendings = data
+
+    for k,v in pairs(Blips) do
+        RemoveBlip(v)
+        Blips[k] = nil
+    end
 
     if clear then RemovePoints() end
 
@@ -241,6 +267,10 @@ RegisterNetEvent('uniq_vending:sync', function(data, clear)
             price = v.price,
             heading = v.heading
         })
+
+        if v.blip then
+            createBlip(v.blip, v.coords)
+        end
     end
 end)
 
@@ -260,9 +290,28 @@ RegisterNetEvent('uniq_vending:startCreating', function(players)
             { label = L('input.owned_type.a'), value = 'a' },
             { label = L('input.owned_type.b'), value = 'b' },
         }, clearable = true, required = true },
+        { type = 'checkbox', label = L('input.blip'), checked = true }
     })
 
     if not input then return end
+
+    if input[5] then
+        local blip = lib.inputDialog('', {
+            { type = 'number', label = L('input.blipInput.a'), required = true },
+            { type = 'number', label = L('input.blipInput.b'), required = true, precision = true, min = 0 },
+            { type = 'number', label = L('input.blipInput.c'), required = true },
+            { type = 'input',  label = L('input.blipInput.d'), required = true, default = input[1] },
+        })
+
+        if not blip then return end
+
+        vending.blip = {
+            sprite = blip[1],
+            scale = blip[2],
+            colour = blip[3],
+            name = blip[4],
+        }
+    end
 
     vending.name = input[1]
     vending.price = input[2]
@@ -288,7 +337,7 @@ RegisterNetEvent('uniq_vending:startCreating', function(players)
 
         local owner = lib.inputDialog(L('input.vending_creator'), {
             { type = 'select', label = L('input.job_owned_label'), description = L('input.job_owned_desc'), options = jobs, clearable = true }
-        })
+        }, {allowCancel = false})
 
         if not owner[1] then
             vending.owner = false
@@ -382,6 +431,10 @@ RegisterNetEvent('uniq_vending:selectCurrency', function(payload)
             itemNames[#itemNames + 1] = { label = data.label, value = data.name }
         end
     end
+
+    table.sort(itemNames, function (a, b)
+        return a.label < b.label
+    end)
 
     local input = lib.inputDialog(payload.fromSlot.label, {
         { type = 'number', label = L('context.item_price_per_one'), required = true, min = 1 },

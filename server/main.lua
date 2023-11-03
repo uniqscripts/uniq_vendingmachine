@@ -252,7 +252,7 @@ RegisterNetEvent('uniq_vending:sellVending', function(name)
 
         MySQL.update('UPDATE `uniq_vending` SET `data` = ? WHERE `name` = ?', {json.encode(Vending[name], {sort_keys = true}), name})
         TriggerClientEvent('uniq_vending:sync', -1, Vending, true)
-        lib.notify(src, { description = L('notify.vending_sold'):format(Vending[name], price), type = 'success' })
+        lib.notify(src, { description = L('notify.vending_sold'):format(Vending[name].name, price), type = 'success' })
     end
 end)
 
@@ -290,6 +290,12 @@ lib.callback.register('uniq_vending:getJobs', function(source)
                 options[#options + 1] = { label = v.label, value = k }
             end
         end
+    elseif IsQBCore() then
+        for k,v in pairs(jobs) do
+            if not cfg.BlacklsitedJobs[k] then
+                options[#options + 1] = { label = v.label, value = k }
+            end
+        end
     end
 
     return options
@@ -299,13 +305,18 @@ lib.callback.register('uniq_vending:getGrades', function(source, job)
     local jobs = GetJobs()
     local options = {}
 
-    for k,v in pairs(jobs['police'].grades) do
-        options[#options + 1] = { label = v.label, value = v.grade }
+    if IsESX() then
+        for k,v in pairs(jobs[job].grades) do
+            options[#options + 1] = { label = v.label, value = v.grade }
+        end
+    elseif IsQBCore() then
+        for k,v in pairs(jobs[job].grades) do
+            options[#options + 1] = { label = v.name, value = tonumber(k) }
+        end
     end
 
     return options
 end)
-
 
 local function saveDB()
     local insertTable = {}

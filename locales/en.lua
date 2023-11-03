@@ -40,6 +40,13 @@ Locales['en'] = {
         vending_label = 'Label',
         vending_price = 'Price',
         select_object = 'Select Object',
+        blip = 'Add Blip?',
+        blipInput = {
+            a = 'Sprite',
+            b = 'Scale',
+            c = 'Colour',
+            d = 'Blip Name',
+        },
         owned_type = {
             title = 'Chose Type',
             desc = 'If you leave input empty then vending will go for sale',
