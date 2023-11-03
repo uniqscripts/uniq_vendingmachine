@@ -1,3 +1,13 @@
+local success, msg = lib.checkDependency('oxmysql', '2.7.3')
+
+if success then
+    success, msg = lib.checkDependency('ox_lib', '3.10.0')
+end
+
+---@diagnostic disable-next-line: param-type-mismatch
+if not success then return warn(msg) end
+
+
 local cfg = lib.require('config.config')
 local Vending = {}
 local buyHook, swapHook
