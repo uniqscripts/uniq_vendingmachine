@@ -12,6 +12,3 @@
 
 
 <br><div><h4 align='center'><a href='https://discord.gg/uniq-team'>Discord Server</a></h4></div><br>
-
-
-![](https://img.shields.io/discord/902467899602632745)
