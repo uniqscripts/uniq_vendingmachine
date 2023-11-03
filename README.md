@@ -1,7 +1,7 @@
 <div align='center'><img src='https://imgur.com/ohvQthn'/></div>
 
 <p align="center">
-  [https://youtu.be/3cohoM3Sh-U](https://youtu.be/3cohoM3Sh-U)
+  [Showcase](https://youtu.be/3cohoM3Sh-U)
 </p>
 <p style="text-align: center;">Ultimate system empowering you to effortlessly create and manage a multitude of personalized vending machines whenever you desire.</p>
 
