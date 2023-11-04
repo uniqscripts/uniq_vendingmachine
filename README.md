@@ -11,7 +11,6 @@
 - **[ox_inventory](https://github.com/overextended/ox_inventory)**
 - **[ESX Legacy](https://github.com/esx-framework/esx-legacy) / [qb-core](https://github.com/qbcore-framework/qb-core)**
 
-<br><div><h4 align='center'><a href='https://github.com/uniqscripts/uniq_vendingmachine/issues'>For all questions use Issues</a></h4></div><br>
-
+<br><div><h2 align='center'><a href='https://github.com/uniqscripts/uniq_vendingmachine/issues'>For all questions use Issues</a></h2></div><br>
 
 <br><div><h4 align='center'><a href='https://discord.gg/uniq-team'>Discord Server</a></h4></div><br>
