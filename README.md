@@ -8,6 +8,7 @@
 
 - **[oxmysql](https://github.com/overextended/oxmysql)**
 - **[ox_lib](https://github.com/overextended/ox_lib)**
+- **[ox_inventory](https://github.com/overextended/ox_inventory)**
 - **[ESX Legacy](https://github.com/esx-framework/esx-legacy) / [qb-core](https://github.com/qbcore-framework/qb-core)**
 
 

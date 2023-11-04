@@ -4,7 +4,17 @@ use_experimental_fxv2_oal 'yes'
 lua54 'yes'
 game 'gta5'
 author 'uniq-team'
-version '1.0'
+repository 'https://github.com/uniqscripts/uniq_vendingmachine'
+version '1.0.0'
+
+
+dependencies {
+    '/server:6116',
+    '/onesync',
+    'oxmysql',
+    'ox_lib',
+	'ox_inventory'
+}
 
 shared_scripts {
 	'@ox_lib/init.lua',
