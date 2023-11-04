@@ -132,11 +132,11 @@ lib.addCommand('addvending', {
     
     if IsQBCore() then
         for k,v in pairs(players) do
-            options[#options + 1] = { label = ('%s | %s'):format(v.PlayerData.name, v.PlayerData.source), value = v.PlayerData.citizenid }
+            options[#options + 1] = { label = ('%s | %s'):format(v.PlayerData.name, v.PlayerData.source), value = v.PlayerData.citizenid, id = v.PlayerData.source}
         end
     elseif IsESX() then
         for k,v in pairs(players) do
-            options[#options + 1] = { label = ('%s | %s'):format(v.getName(), v.source), value = v.identifier }
+            options[#options + 1] = { label = ('%s | %s'):format(v.getName(), v.source), value = v.identifier, id = v.source }
         end
     end
 

@@ -278,10 +278,6 @@ RegisterNetEvent('uniq_vending:startCreating', function(players)
     if source == '' then return end
     local vending = {}
 
-    table.sort(players, function (a, b)
-        return a.id < b.id
-    end)
-
     local input = lib.inputDialog(L('input.vending_creator'), {
         { type = 'input', label = L('input.vending_label'), required = true },
         { type = 'number', label = L('input.vending_price'), required = true, min = 1 },
@@ -318,6 +314,10 @@ RegisterNetEvent('uniq_vending:startCreating', function(players)
     vending.obj = input[3]
 
     if input[4] == 'a' then
+        table.sort(players, function (a, b)
+            return a.id < b.id
+        end)
+
         local owner = lib.inputDialog(L('input.vending_creator'), {
             { type = 'select', label = L('input.player_owned_label'), description = L('input.player_owned_desc'), options = players, clearable = true }
         })
