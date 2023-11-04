@@ -376,27 +376,33 @@ RegisterNetEvent('uniq_vending:startCreating', function(players)
                 obj = CreateObject(vending.obj , coords.x, coords.y, coords.z, false, false, false)
             end
     
-            if hit then
-                if IsControlPressed(0, 174) then
-                    heading += 1.5
-                end
-        
-                if IsControlPressed(0, 175) then
-                    heading -= 1.5
-                end
-        
-                if IsDisabledControlPressed(0, 176) then
-                    lib.hideTextUI()
-                    vending.coords = coords
-                    vending.heading = GetEntityHeading(obj)
-                    DeleteObject(obj)
-                    TriggerServerEvent('uniq_vending:createVending', vending)
-                    break
-                end
-        
+            if IsControlPressed(0, 174) then
+                heading += 1.5
+            end
+    
+            if IsControlPressed(0, 175) then
+                heading -= 1.5
+            end
+    
+            if IsDisabledControlPressed(0, 176) then
+                lib.hideTextUI()
+                vending.coords = coords
+                vending.heading = GetEntityHeading(obj)
+                DeleteObject(obj)
+                TriggerServerEvent('uniq_vending:createVending', vending)
+                
+                break
+            end
+
+            local pedPos = GetEntityCoords(cache.ped)
+            local distance = #(coords - pedPos)
+
+            if distance >= 3.5 then
                 SetEntityCoords(obj, coords.x, coords.y, coords.z)
                 SetEntityHeading(obj, heading)
             end
+
+
             Wait(0)
         end
     end)
