@@ -36,7 +36,7 @@ RegisterNetEvent('uniq_vending:SetUpStore', function(store)
     local items = exports.ox_inventory:GetInventoryItems(store, false)
     local inventory = {}
 
-    if items then
+    if table.type(items) ~= 'empty' then
         for k,v in pairs(items) do
             inventory[#inventory + 1] = { name = v.name, metadata = v.metadata, price = v.metadata.price, currency = v.metadata.currency, count = v.count }
         end
