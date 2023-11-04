@@ -235,12 +235,6 @@ RegisterNetEvent('uniq_vending:buyVending', function(name)
     end
 end)
 
-
-RegisterCommand('adad', function (source, args, raw)
-    lib.notify(source, { description = 'ad', type = 'success' })
-end)
-
-
 RegisterNetEvent('uniq_vending:sellVending', function(name)
     local src = source
     
