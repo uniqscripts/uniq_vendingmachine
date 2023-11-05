@@ -48,7 +48,7 @@ end
 
 local menu = {
     id = 'uniq_vending:main',
-    title = 'Vending Machine',
+    title = L('context.vending_title'),
     options = {}
 }
 
