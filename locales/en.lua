@@ -67,6 +67,7 @@ Locales['en'] = {
             ('[←] - Rotate the object left  \n'),
             ('[→] - Rotate the object right  \n'),
             ('[ENTER] - Finish \n'),
-        }
+        },
+        open_vending = '[E] - Open Vending',
     }
 }
