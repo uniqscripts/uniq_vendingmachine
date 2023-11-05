@@ -14,6 +14,7 @@ Locales['en'] = {
         no_vendings = 'There is no created vendings'
     },
     context = {
+        vending_title = 'Vending Machine',
         vending_settings = 'Vending Settings',
         money = 'Money',
         update_stock = 'Update Stock',
