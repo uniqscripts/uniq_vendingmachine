@@ -183,7 +183,7 @@ CreateThread(function()
             if point.currentDistance < 1.4 then
                 if not textUI then
                     textUI = true
-                    lib.showTextUI('[E] - Open Vending')
+                    lib.showTextUI(L('text_ui.open_vending'))
                 end
             else
                 if textUI then
