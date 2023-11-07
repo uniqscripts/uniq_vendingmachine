@@ -13,7 +13,7 @@
 
 <br><div><h6 align='center'><a href='https://github.com/uniqscripts/uniq_vendingmachine/issues'>For all questions use Issues</a></h6></div><br>
 
-<br><div><h6 align='center'><a href='https://github.com/uniqscripts/uniq_vendingmachine/issues'>Standalone version, needs some testings</a></h6></div><br>
+<br><div><h6 align='center'><a href='https://github.com/katotekii/uniq_vending_standalone'>Standalone version, needs some testings</a></h6></div><br>
 
 <div><h4 align='center'><a href='https://discord.gg/uniq-team'>Discord Server</a></h4></div>
 
