@@ -38,17 +38,15 @@ RegisterNetEvent('uniq_vending:SetUpStore', function(store)
     Wait(300)
     local items = exports.ox_inventory:GetInventoryItems(store, false)
     local inventory = {}
-
-    if table.type(items) ~= 'empty' then
-        for k,v in pairs(items) do
-            inventory[#inventory + 1] = { name = v.name, metadata = v.metadata, price = v.metadata.price, currency = v.metadata.currency, count = v.count }
-        end
-
-        exports.ox_inventory:RegisterShop(store, {
-            name = store,
-            inventory = inventory,
-        })
+    
+    for k,v in pairs(items) do
+        inventory[#inventory + 1] = { name = v.name, metadata = v.metadata, price = v.metadata.price, currency = v.metadata.currency, count = v.count }
     end
+
+    exports.ox_inventory:RegisterShop(store, {
+        name = store,
+        inventory = inventory,
+    })
 end)
 
 local function SetUpHooks(inventoryFilter)
