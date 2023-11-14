@@ -14,7 +14,10 @@ local buyHook, swapHook
 
 
 RegisterNetEvent('uniq_vending:setData', function(price, currency, payload)
-    exports.ox_inventory:SetMetadata(payload.toInventory, payload.toSlot, { price = price, currency = currency })
+    payload.fromSlot.metadata.price = price
+    payload.fromSlot.metadata.currency = currency
+
+    exports.ox_inventory:SetMetadata(payload.toInventory, payload.toSlot, payload.fromSlot.metadata)
     Wait(200)
     local items = exports.ox_inventory:GetInventoryItems(payload.toInventory, false)
     local inventory = {}
@@ -53,6 +56,9 @@ local function SetUpHooks(inventoryFilter)
     if swapHook then exports.ox_inventory:removeHooks(swapHook) end
 
     buyHook = exports.ox_inventory:registerHook('buyItem', function(payload)
+        payload.metadata.price = nil
+        payload.metadata.currency = nil
+
         exports.ox_inventory:RemoveItem(payload.shopType, payload.itemName, payload.count)
         exports.ox_inventory:AddItem(('stash-money-%s'):format(payload.shopType), payload.currency, payload.totalPrice)
 
@@ -94,7 +100,7 @@ MySQL.ready(function()
         ]])
     end
 
-    Wait(50)
+    Wait(100)
 
     local result = MySQL.query.await('SELECT * FROM `uniq_vending`')
 
