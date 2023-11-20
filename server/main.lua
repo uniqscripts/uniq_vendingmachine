@@ -24,7 +24,7 @@ RegisterNetEvent('uniq_vending:setData', function(price, currency, payload)
 
     if items then
         for k,v in pairs(items) do
-            inventory[#inventory + 1] = { name = v.name, metadata = v.metadata, price = v.metadata.price, currency = v.metadata.currency, count = v.count }
+            inventory[#inventory + 1] = { name = v.name, metadata = v.metadata, price = v.metadata.price or 999999, currency = v.metadata.currency, count = v.count }
         end
 
         exports.ox_inventory:RegisterShop(payload.toInventory, {
@@ -40,7 +40,7 @@ RegisterNetEvent('uniq_vending:SetUpStore', function(store)
     local inventory = {}
     
     for k,v in pairs(items) do
-        inventory[#inventory + 1] = { name = v.name, metadata = v.metadata, price = v.metadata.price, currency = v.metadata.currency, count = v.count }
+        inventory[#inventory + 1] = { name = v.name, metadata = v.metadata, price = v.metadata.price or 999999, currency = v.metadata.currency, count = v.count }
     end
 
     exports.ox_inventory:RegisterShop(store, {
