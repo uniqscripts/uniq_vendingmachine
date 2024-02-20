@@ -199,8 +199,7 @@ end)
 
 
 local function createBlip(data, coords)
-    local blip = Blips[#Blips + 1]
-    blip = AddBlipForCoord(coords.x, coords.y, coords.z)
+    local blip = AddBlipForCoord(coords.x, coords.y, coords.z)
 
     SetBlipSprite (blip, data.sprite)
     SetBlipDisplay(blip, 4)
@@ -211,6 +210,8 @@ local function createBlip(data, coords)
     BeginTextCommandSetBlipName('STRING')
     AddTextComponentSubstringPlayerName(data.name)
     EndTextCommandSetBlipName(blip)
+
+    Blips[#Blips + 1] = blip
 end
 
 function SetupVendings()
