@@ -3,7 +3,7 @@ local raycast = lib.require('client.raycast')
 local Points, Blips = {}, {}
 
 
-local function RemovePoints()
+function RemovePoints()
     for k,v in pairs(Points) do
         if v.entity then
             if DoesEntityExist(v.entity) then

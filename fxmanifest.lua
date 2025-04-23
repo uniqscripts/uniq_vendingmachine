@@ -5,7 +5,7 @@ lua54 'yes'
 game 'gta5'
 author 'uniq-team'
 repository 'https://github.com/uniqscripts/uniq_vendingmachine'
-version '1.3.0'
+version '1.3.1'
 
 
 dependencies {

@@ -10,6 +10,7 @@ end)
 
 
 RegisterNetEvent('QBCore:Client:OnPlayerUnload', function()
+	RemovePoints()
     table.wipe(PlayerData)
     PlayerLoaded = false
 end)

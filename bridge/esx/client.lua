@@ -15,7 +15,9 @@ AddEventHandler('esx:setJob', function(job)
 	PlayerData.job = job
 end)
 
+
 RegisterNetEvent('esx:onPlayerLogout', function()
+    RemovePoints()
     table.wipe(PlayerData)
     PlayerLoaded = false
 end)
